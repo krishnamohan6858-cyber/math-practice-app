@@ -10,9 +10,15 @@ function Home() {
   // 👑 Premium check
   const isPremiumUser = localStorage.getItem("isPremiumUser") === "true";
 
-  useEffect(() => {
-    axios.get("http://localhost:5000/chapters")
-      .then(res => setChapters(res.data));
+  const API_URL = "https://math-practice-app-2.onrender.com";
+
+    useEffect(() => {
+      axios.get(`${API_URL}/chapters`)
+        .then(res => setChapters(res.data));
+
+  // useEffect(() => {
+  //   axios.get("http://localhost:5000/chapters")
+  //     .then(res => setChapters(res.data));
 
     // 🔥 XP calculation
     const progress = JSON.parse(localStorage.getItem("progress")) || {};
