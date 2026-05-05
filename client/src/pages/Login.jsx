@@ -5,12 +5,20 @@ import { useNavigate } from "react-router-dom";
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
-  const API = "https://math-practice-app-2.onrender.com"; // ✅ your backend URL
+  const API = "https://math-practice-app-2.onrender.com";
 
   const handleLogin = async () => {
+    if (!email || !password) {
+      return alert("Please fill all fields ⚠️");
+    }
+
     try {
+      setLoading(true);
+
       const res = await axios.post(`${API}/login`, {
         email,
         password
@@ -23,8 +31,10 @@ function Login() {
       navigate("/");
 
     } catch (err) {
-      alert("Login Failed ❌");
       console.error(err);
+      alert(err?.response?.data?.error || "Login Failed ❌");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -35,16 +45,20 @@ function Login() {
       <input
         type="email"
         placeholder="Email"
+        value={email}
         onChange={(e) => setEmail(e.target.value)}
       /><br /><br />
 
       <input
         type="password"
         placeholder="Password"
+        value={password}
         onChange={(e) => setPassword(e.target.value)}
       /><br /><br />
 
-      <button onClick={handleLogin}>Login</button>
+      <button onClick={handleLogin} disabled={loading}>
+        {loading ? "Logging in..." : "Login"}
+      </button>
     </div>
   );
 }
