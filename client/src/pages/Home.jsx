@@ -1,24 +1,24 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import LevelButton from "../components/LevelButton";
+import { useNavigate } from "react-router-dom";
 
 function Home() {
   const [chapters, setChapters] = useState([]);
   const [totalXP, setTotalXP] = useState(0);
-  const [analytics, setAnalytics] = useState({}); // 📊 NEW
+  const [analytics, setAnalytics] = useState({});
+
+  const navigate = useNavigate(); // ✅ REQUIRED
 
   // 👑 Premium check
   const isPremiumUser = localStorage.getItem("isPremiumUser") === "true";
 
   const API_URL = "https://math-practice-app-2.onrender.com";
 
-    useEffect(() => {
-      axios.get(`${API_URL}/chapters`)
-        .then(res => setChapters(res.data));
-
-  // useEffect(() => {
-  //   axios.get("http://localhost:5000/chapters")
-  //     .then(res => setChapters(res.data));
+  useEffect(() => {
+    axios.get(`${API_URL}/chapters`)
+      .then(res => setChapters(res.data))
+      .catch(err => console.error(err));
 
     // 🔥 XP calculation
     const progress = JSON.parse(localStorage.getItem("progress")) || {};
@@ -43,6 +43,20 @@ function Home() {
       margin: "auto",
       fontFamily: "Arial"
     }}>
+
+      {/* 🔐 LOGIN BUTTON */}
+      <div style={{ textAlign: "right", marginBottom: "10px" }}>
+        <button onClick={() => navigate("/login")}>
+          Login
+        </button>
+
+        <button 
+          onClick={() => navigate("/signup")}
+          style={{ marginLeft: "10px" }}
+        >
+          Signup
+        </button>
+      </div>
 
       {/* 👑 PREMIUM BADGE */}
       {isPremiumUser && (
