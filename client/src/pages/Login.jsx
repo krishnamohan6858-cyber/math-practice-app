@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -10,6 +10,14 @@ function Login() {
   const navigate = useNavigate();
 
   const API = "https://math-practice-app-2.onrender.com";
+
+  // ✅ Auto redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/");
+    }
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -59,6 +67,17 @@ function Login() {
       <button onClick={handleLogin} disabled={loading}>
         {loading ? "Logging in..." : "Login"}
       </button>
+
+      {/* 🔗 Go to Signup */}
+      <p style={{ marginTop: "10px" }}>
+        Don't have an account?{" "}
+        <span 
+          style={{ color: "blue", cursor: "pointer" }}
+          onClick={() => navigate("/signup")}
+        >
+          Signup
+        </span>
+      </p>
     </div>
   );
 }

@@ -8,12 +8,16 @@ function Home() {
   const [totalXP, setTotalXP] = useState(0);
   const [analytics, setAnalytics] = useState({});
 
-  const navigate = useNavigate(); // ✅ REQUIRED
+  const navigate = useNavigate();
+
+  const API_URL = "https://math-practice-app-2.onrender.com";
+
+  // ✅ Check login
+  const token = localStorage.getItem("token");
+  const isLoggedIn = !!token;
 
   // 👑 Premium check
   const isPremiumUser = localStorage.getItem("isPremiumUser") === "true";
-
-  const API_URL = "https://math-practice-app-2.onrender.com";
 
   useEffect(() => {
     axios.get(`${API_URL}/chapters`)
@@ -36,6 +40,12 @@ function Home() {
 
   }, []);
 
+  // ✅ Logout function
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
   return (
     <div style={{
       padding: "20px",
@@ -44,18 +54,28 @@ function Home() {
       fontFamily: "Arial"
     }}>
 
-      {/* 🔐 LOGIN BUTTON */}
+      {/* 🔐 AUTH BUTTONS */}
       <div style={{ textAlign: "right", marginBottom: "10px" }}>
-        <button onClick={() => navigate("/login")}>
-          Login
-        </button>
 
-        <button 
-          onClick={() => navigate("/signup")}
-          style={{ marginLeft: "10px" }}
-        >
-          Signup
-        </button>
+        {!isLoggedIn ? (
+          <>
+            <button onClick={() => navigate("/login")}>
+              Login
+            </button>
+
+            <button 
+              onClick={() => navigate("/signup")}
+              style={{ marginLeft: "10px" }}
+            >
+              Signup
+            </button>
+          </>
+        ) : (
+          <button onClick={handleLogout}>
+            Logout
+          </button>
+        )}
+
       </div>
 
       {/* 👑 PREMIUM BADGE */}
@@ -93,7 +113,7 @@ function Home() {
         </div>
       </div>
 
-      {/* 📊 PERFORMANCE SECTION */}
+      {/* 📊 PERFORMANCE */}
       <div style={{
         background: "rgba(255,255,255,0.9)",
         padding: "15px",
