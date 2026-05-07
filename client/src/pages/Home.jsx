@@ -16,6 +16,17 @@ function Home() {
 
   const token = localStorage.getItem("token");
 
+  // ✅ Get current logged in user
+  let currentUser = null;
+
+  try {
+    currentUser = JSON.parse(localStorage.getItem("user"));
+  } catch (err) {
+    currentUser = null;
+  }
+
+  const userId = currentUser?.id;
+
   // ✅ Redirect if not logged in
   useEffect(() => {
 
@@ -32,7 +43,7 @@ function Home() {
 
     try {
 
-      // ✅ Get chapters
+      // ✅ Fetch chapters
       const res = await axios.get(
         `${API_URL}/chapters`,
         {
@@ -44,32 +55,45 @@ function Home() {
 
       setChapters(res.data);
 
-      // ✅ XP Calculation
-      const progress =
+      // =========================
+      // ✅ USER-SPECIFIC PROGRESS
+      // =========================
+
+      const allProgress =
         JSON.parse(localStorage.getItem("progress")) || {};
+
+      const userProgress =
+        allProgress[userId] || {};
 
       let xp = 0;
 
-      Object.values(progress).forEach(p => {
+      Object.values(userProgress).forEach(p => {
         xp += p.score || 0;
       });
 
       setTotalXP(xp);
 
-      // ✅ Analytics
-      const savedAnalytics =
+      // =========================
+      // ✅ USER-SPECIFIC ANALYTICS
+      // =========================
+
+      const allAnalytics =
         JSON.parse(localStorage.getItem("analytics")) || {};
 
-      setAnalytics(savedAnalytics);
+      const userAnalytics =
+        allAnalytics[userId] || {};
+
+      setAnalytics(userAnalytics);
 
     } catch (err) {
 
       console.error(err);
 
-      // ✅ Invalid token handling
+      // ✅ Invalid token
       if (err.response?.status === 401) {
 
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
 
         alert("Session expired. Please login again.");
 
@@ -86,12 +110,17 @@ function Home() {
   const handleLogout = () => {
 
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
 
     navigate("/login");
   };
 
   if (loading) {
-    return <h2 style={{ textAlign: "center" }}>Loading...</h2>;
+    return (
+      <h2 style={{ textAlign: "center" }}>
+        Loading...
+      </h2>
+    );
   }
 
   return (
@@ -106,6 +135,7 @@ function Home() {
       <div style={{
         display: "flex",
         justifyContent: "space-between",
+        alignItems: "center",
         marginBottom: "20px"
       }}>
 
@@ -117,7 +147,7 @@ function Home() {
 
       </div>
 
-      {/* ✅ XP */}
+      {/* ✅ XP SECTION */}
       <div style={{
         background: "#f5f5f5",
         padding: "15px",
@@ -165,7 +195,10 @@ function Home() {
             : null;
 
           return (
-            <div key={ch.id} style={{ marginBottom: "10px" }}>
+            <div
+              key={ch.id}
+              style={{ marginBottom: "10px" }}
+            >
 
               <strong>{ch.name}</strong> :
 
