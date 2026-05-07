@@ -5,12 +5,14 @@ import Result from "./pages/Result";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Leaderboard from "./pages/Leaderboard";
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/leaderboard" element={<Leaderboard />} />
 
       <Route path="/" element={
         <ProtectedRoute>

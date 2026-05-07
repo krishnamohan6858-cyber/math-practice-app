@@ -133,10 +133,20 @@ function Home() {
 
         <h2>📘 Math Practice</h2>
 
-        <button onClick={handleLogout}>
-          Logout
-        </button>
+        <div>
+          <button
+            onClick={() => navigate("/leaderboard")}
+            style={{
+              marginRight: "10px"
+            }}
+          >
+            🏆 Leaderboard
+          </button>
 
+          <button onClick={handleLogout}>
+            Logout
+          </button>
+        </div>
       </div>
 
       {/* ✅ XP SECTION */}

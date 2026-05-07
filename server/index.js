@@ -289,6 +289,37 @@ app.get("/my-results", auth, async (req, res) => {
   }
 });
 
+// =========================
+// ✅ LEADERBOARD
+// =========================
+app.get("/leaderboard", async (req, res) => {
+
+  try {
+
+    const result = await pool.query(`
+      SELECT 
+        users.email,
+        COALESCE(SUM(results.score), 0) AS total_xp
+      FROM users
+      LEFT JOIN results
+      ON users.id = results.user_id
+      GROUP BY users.email
+      ORDER BY total_xp DESC
+      LIMIT 10
+    `);
+
+    res.json(result.rows);
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: "Failed to fetch leaderboard"
+    });
+  }
+});
+
 
 // =========================
 // ✅ PORT
