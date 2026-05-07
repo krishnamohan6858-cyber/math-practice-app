@@ -4,69 +4,95 @@ import LevelButton from "../components/LevelButton";
 import { useNavigate } from "react-router-dom";
 
 function Home() {
+
   const [chapters, setChapters] = useState([]);
   const [totalXP, setTotalXP] = useState(0);
   const [analytics, setAnalytics] = useState({});
+  const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
 
   const API_URL = "https://math-practice-app-2.onrender.com";
 
-  // ✅ Check login
   const token = localStorage.getItem("token");
-  const isLoggedIn = !!token;
 
-  // 👑 Premium check
-  const isPremiumUser = localStorage.getItem("isPremiumUser") === "true";
-
+  // ✅ Redirect if not logged in
   useEffect(() => {
 
-    // ✅ Fetch chapters
-    axios.get(`${API_URL}/chapters`)
-      .then(res => setChapters(res.data))
-      .catch(err => console.error(err));
-
-    // ✅ Fetch user results from backend
-    if (token) {
-      axios.get(`${API_URL}/my-results`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-      .then(res => {
-
-        const results = res.data || [];
-
-        let xp = 0;
-        const analyticsData = {};
-
-        results.forEach(r => {
-
-          xp += r.score || 0;
-
-          const accuracy = (r.score / 30) * 100;
-
-          if (!analyticsData[r.chapter_id]) {
-            analyticsData[r.chapter_id] = [];
-          }
-
-          analyticsData[r.chapter_id].push(accuracy);
-        });
-
-        setTotalXP(xp);
-        setAnalytics(analyticsData);
-
-      })
-      .catch(err => console.error(err));
+    if (!token) {
+      navigate("/login");
+      return;
     }
+
+    fetchData();
 
   }, []);
 
+  const fetchData = async () => {
+
+    try {
+
+      // ✅ Get chapters
+      const res = await axios.get(
+        `${API_URL}/chapters`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      setChapters(res.data);
+
+      // ✅ XP Calculation
+      const progress =
+        JSON.parse(localStorage.getItem("progress")) || {};
+
+      let xp = 0;
+
+      Object.values(progress).forEach(p => {
+        xp += p.score || 0;
+      });
+
+      setTotalXP(xp);
+
+      // ✅ Analytics
+      const savedAnalytics =
+        JSON.parse(localStorage.getItem("analytics")) || {};
+
+      setAnalytics(savedAnalytics);
+
+    } catch (err) {
+
+      console.error(err);
+
+      // ✅ Invalid token handling
+      if (err.response?.status === 401) {
+
+        localStorage.removeItem("token");
+
+        alert("Session expired. Please login again.");
+
+        navigate("/login");
+      }
+
+    } finally {
+
+      setLoading(false);
+    }
+  };
+
   // ✅ Logout
   const handleLogout = () => {
+
     localStorage.removeItem("token");
+
     navigate("/login");
   };
+
+  if (loading) {
+    return <h2 style={{ textAlign: "center" }}>Loading...</h2>;
+  }
 
   return (
     <div style={{
@@ -76,77 +102,55 @@ function Home() {
       fontFamily: "Arial"
     }}>
 
-      {/* 🔐 AUTH BUTTONS */}
-      <div style={{ textAlign: "right", marginBottom: "10px" }}>
+      {/* ✅ HEADER */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        marginBottom: "20px"
+      }}>
 
-        {!isLoggedIn ? (
-          <>
-            <button onClick={() => navigate("/login")}>
-              Login
-            </button>
+        <h2>📘 Math Practice</h2>
 
-            <button
-              onClick={() => navigate("/signup")}
-              style={{ marginLeft: "10px" }}
-            >
-              Signup
-            </button>
-          </>
-        ) : (
-          <button onClick={handleLogout}>
-            Logout
-          </button>
-        )}
+        <button onClick={handleLogout}>
+          Logout
+        </button>
 
       </div>
 
-      {/* 👑 PREMIUM BADGE */}
-      {isPremiumUser && (
-        <div style={{
-          background: "#fbbf24",
-          padding: "10px",
-          borderRadius: "10px",
-          marginBottom: "15px",
-          fontWeight: "bold",
-          textAlign: "center"
-        }}>
-          👑 Premium User
-        </div>
-      )}
-
-      {/* 🔥 XP HEADER */}
+      {/* ✅ XP */}
       <div style={{
-        background: "rgba(255,255,255,0.9)",
-        backdropFilter: "blur(5px)",
+        background: "#f5f5f5",
         padding: "15px",
-        borderRadius: "12px",
-        marginBottom: "20px",
-        boxShadow: "0 4px 10px rgba(0,0,0,0.1)"
+        borderRadius: "10px",
+        marginBottom: "20px"
       }}>
-        <h2>🔥 Total XP: {totalXP}</h2>
+
+        <h3>🔥 Total XP: {totalXP}</h3>
 
         <div style={{
-          background: "#eee",
+          background: "#ddd",
           height: "10px",
           borderRadius: "10px"
         }}>
+
           <div style={{
             width: `${Math.min(totalXP, 100)}%`,
-            background: "#4CAF50",
+            background: "green",
             height: "100%",
             borderRadius: "10px"
           }}></div>
+
         </div>
       </div>
 
-      {/* 📊 PERFORMANCE */}
+      {/* ✅ PERFORMANCE */}
       <div style={{
-        background: "rgba(255,255,255,0.9)",
+        background: "#f5f5f5",
         padding: "15px",
-        borderRadius: "12px",
-        marginBottom: "20px",
-        boxShadow: "0 4px 10px rgba(0,0,0,0.1)"
+        borderRadius: "10px",
+        marginBottom: "20px"
       }}>
+
         <h2>📊 Your Performance</h2>
 
         {chapters.map(ch => {
@@ -155,51 +159,42 @@ function Home() {
 
           const avg = data.length
             ? (
-                data.reduce((a, b) => a + b, 0) / data.length
+                data.reduce((a, b) => a + b, 0) /
+                data.length
               ).toFixed(0)
             : null;
 
           return (
-            <div key={ch.id} style={{ margin: "10px 0" }}>
+            <div key={ch.id} style={{ marginBottom: "10px" }}>
 
-              <strong>{ch.name}</strong> :{" "}
+              <strong>{ch.name}</strong> :
+
+              {" "}
 
               {avg ? `${avg}%` : "No data"}
-
-              {avg && avg < 50 && (
-                <span style={{
-                  color: "red",
-                  marginLeft: "10px"
-                }}>
-                  ⚠️ Weak
-                </span>
-              )}
 
             </div>
           );
         })}
       </div>
 
-      <h1 style={{ textAlign: "center" }}>
-        📘 Math Practice
-      </h1>
-
-      {/* 📚 CHAPTER LIST */}
+      {/* ✅ CHAPTERS */}
       {chapters.map(ch => (
         <div
           key={ch.id}
           style={{
-            background: "rgba(255,255,255,0.9)",
-            backdropFilter: "blur(5px)",
+            background: "#fff",
             padding: "20px",
-            margin: "20px 0",
-            borderRadius: "12px",
-            boxShadow: "0 4px 10px rgba(0,0,0,0.1)"
+            marginBottom: "20px",
+            borderRadius: "10px",
+            boxShadow: "0 0 10px rgba(0,0,0,0.1)"
           }}
         >
+
           <h2>{ch.name}</h2>
 
           <div>
+
             {[1, 2, 3, 4, 5].map(level => (
               <LevelButton
                 key={level}
@@ -207,6 +202,7 @@ function Home() {
                 level={level}
               />
             ))}
+
           </div>
 
         </div>
