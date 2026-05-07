@@ -20,31 +20,49 @@ function Home() {
   const isPremiumUser = localStorage.getItem("isPremiumUser") === "true";
 
   useEffect(() => {
-    axios.get(`${API_URL}/chapters`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`
-      }
-    })
+
+    // ✅ Fetch chapters
+    axios.get(`${API_URL}/chapters`)
       .then(res => setChapters(res.data))
       .catch(err => console.error(err));
 
-    // 🔥 XP calculation
-    const progress = JSON.parse(localStorage.getItem("progress")) || {};
-    let xp = 0;
+    // ✅ Fetch user results from backend
+    if (token) {
+      axios.get(`${API_URL}/my-results`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      .then(res => {
 
-    Object.values(progress).forEach(p => {
-      xp += p.score || 0;
-    });
+        const results = res.data || [];
 
-    setTotalXP(xp);
+        let xp = 0;
+        const analyticsData = {};
 
-    // 📊 Load analytics
-    const savedAnalytics = JSON.parse(localStorage.getItem("analytics")) || {};
-    setAnalytics(savedAnalytics);
+        results.forEach(r => {
+
+          xp += r.score || 0;
+
+          const accuracy = (r.score / 30) * 100;
+
+          if (!analyticsData[r.chapter_id]) {
+            analyticsData[r.chapter_id] = [];
+          }
+
+          analyticsData[r.chapter_id].push(accuracy);
+        });
+
+        setTotalXP(xp);
+        setAnalytics(analyticsData);
+
+      })
+      .catch(err => console.error(err));
+    }
 
   }, []);
 
-  // ✅ Logout function
+  // ✅ Logout
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
@@ -67,7 +85,7 @@ function Home() {
               Login
             </button>
 
-            <button 
+            <button
               onClick={() => navigate("/signup")}
               style={{ marginLeft: "10px" }}
             >
@@ -107,7 +125,11 @@ function Home() {
       }}>
         <h2>🔥 Total XP: {totalXP}</h2>
 
-        <div style={{ background: "#eee", height: "10px", borderRadius: "10px" }}>
+        <div style={{
+          background: "#eee",
+          height: "10px",
+          borderRadius: "10px"
+        }}>
           <div style={{
             width: `${Math.min(totalXP, 100)}%`,
             background: "#4CAF50",
@@ -128,44 +150,58 @@ function Home() {
         <h2>📊 Your Performance</h2>
 
         {chapters.map(ch => {
+
           const data = analytics[ch.id] || [];
 
           const avg = data.length
-            ? (data.reduce((a, b) => a + b, 0) / data.length).toFixed(0)
+            ? (
+                data.reduce((a, b) => a + b, 0) / data.length
+              ).toFixed(0)
             : null;
 
           return (
             <div key={ch.id} style={{ margin: "10px 0" }}>
+
               <strong>{ch.name}</strong> :{" "}
+
               {avg ? `${avg}%` : "No data"}
 
               {avg && avg < 50 && (
-                <span style={{ color: "red", marginLeft: "10px" }}>
+                <span style={{
+                  color: "red",
+                  marginLeft: "10px"
+                }}>
                   ⚠️ Weak
                 </span>
               )}
+
             </div>
           );
         })}
       </div>
 
-      <h1 style={{ textAlign: "center" }}>📘 Math Practice</h1>
+      <h1 style={{ textAlign: "center" }}>
+        📘 Math Practice
+      </h1>
 
       {/* 📚 CHAPTER LIST */}
       {chapters.map(ch => (
-        <div key={ch.id} style={{
-          background: "rgba(255,255,255,0.9)",
-          backdropFilter: "blur(5px)",
-          padding: "20px",
-          margin: "20px 0",
-          borderRadius: "12px",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.1)"
-        }}>
+        <div
+          key={ch.id}
+          style={{
+            background: "rgba(255,255,255,0.9)",
+            backdropFilter: "blur(5px)",
+            padding: "20px",
+            margin: "20px 0",
+            borderRadius: "12px",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.1)"
+          }}
+        >
           <h2>{ch.name}</h2>
 
           <div>
             {[1, 2, 3, 4, 5].map(level => (
-              <LevelButton 
+              <LevelButton
                 key={level}
                 chapterId={ch.id}
                 level={level}

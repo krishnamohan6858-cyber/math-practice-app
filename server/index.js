@@ -15,7 +15,10 @@ app.use(express.json());
 
 const SECRET = "mysecretkey";
 
-// ✅ Health check
+
+// =========================
+// ✅ HEALTH CHECK
+// =========================
 app.get("/", (req, res) => {
   res.send("✅ Server is running");
 });
@@ -29,6 +32,7 @@ app.post("/signup", async (req, res) => {
 
   try {
 
+    // ✅ Check existing user
     const userExists = await pool.query(
       "SELECT * FROM users WHERE email=$1",
       [email]
@@ -40,8 +44,10 @@ app.post("/signup", async (req, res) => {
       });
     }
 
+    // ✅ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // ✅ Save user
     await pool.query(
       `
       INSERT INTO users(email, password)
@@ -55,6 +61,7 @@ app.post("/signup", async (req, res) => {
     });
 
   } catch (err) {
+
     console.error(err);
 
     res.status(500).json({
@@ -68,10 +75,12 @@ app.post("/signup", async (req, res) => {
 // ✅ LOGIN
 // =========================
 app.post("/login", async (req, res) => {
+
   const { email, password } = req.body;
 
   try {
 
+    // ✅ Find user
     const result = await pool.query(
       "SELECT * FROM users WHERE email=$1",
       [email]
@@ -85,6 +94,7 @@ app.post("/login", async (req, res) => {
 
     const user = result.rows[0];
 
+    // ✅ Compare password
     const validPassword = await bcrypt.compare(
       password,
       user.password
@@ -96,20 +106,25 @@ app.post("/login", async (req, res) => {
       });
     }
 
-    // ✅ TOKEN WITH USER ID
+    // ✅ Generate token
     const token = jwt.sign(
       {
         id: user.id,
         email: user.email
       },
-      SECRET
+      SECRET,
+      {
+        expiresIn: "7d"
+      }
     );
 
     res.json({
-      token
+      token,
+      email: user.email
     });
 
   } catch (err) {
+
     console.error(err);
 
     res.status(500).json({
@@ -123,6 +138,7 @@ app.post("/login", async (req, res) => {
 // ✅ GET CHAPTERS
 // =========================
 app.get("/chapters", auth, async (req, res) => {
+
   try {
 
     const result = await pool.query(
@@ -132,6 +148,7 @@ app.get("/chapters", auth, async (req, res) => {
     res.json(result.rows);
 
   } catch (err) {
+
     console.error(err);
 
     res.status(500).json({
@@ -145,6 +162,7 @@ app.get("/chapters", auth, async (req, res) => {
 // ✅ GET QUESTIONS
 // =========================
 app.get("/questions/:chapterId/:level", auth, async (req, res) => {
+
   const { chapterId, level } = req.params;
 
   try {
@@ -161,6 +179,7 @@ app.get("/questions/:chapterId/:level", auth, async (req, res) => {
     res.json(result.rows);
 
   } catch (err) {
+
     console.error(err);
 
     res.status(500).json({
@@ -174,6 +193,7 @@ app.get("/questions/:chapterId/:level", auth, async (req, res) => {
 // ✅ SAVE RESULT
 // =========================
 app.post("/submit", auth, async (req, res) => {
+
   const { score, chapterId, level } = req.body;
 
   try {
@@ -196,6 +216,7 @@ app.post("/submit", auth, async (req, res) => {
     });
 
   } catch (err) {
+
     console.error(err);
 
     res.status(500).json({
@@ -209,17 +230,19 @@ app.post("/submit", auth, async (req, res) => {
 // ✅ MY PERFORMANCE
 // =========================
 app.get("/my-performance", auth, async (req, res) => {
+
   try {
 
     const result = await pool.query(
       `
       SELECT 
         chapter_id,
-        AVG(score) as avg_score,
+        ROUND(AVG(score), 2) as avg_score,
         COUNT(*) as attempts
       FROM results
       WHERE user_id = $1
       GROUP BY chapter_id
+      ORDER BY chapter_id
       `,
       [req.user.id]
     );
@@ -227,10 +250,41 @@ app.get("/my-performance", auth, async (req, res) => {
     res.json(result.rows);
 
   } catch (err) {
+
     console.error(err);
 
     res.status(500).json({
       error: "Failed to fetch performance"
+    });
+  }
+});
+
+
+// =========================
+// ✅ GET MY RESULTS
+// =========================
+app.get("/my-results", auth, async (req, res) => {
+
+  try {
+
+    const result = await pool.query(
+      `
+      SELECT *
+      FROM results
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+      `,
+      [req.user.id]
+    );
+
+    res.json(result.rows);
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: "Failed to fetch results"
     });
   }
 });
