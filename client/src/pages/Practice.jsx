@@ -13,6 +13,7 @@ function Practice() {
   const [index, setIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [xp, setXp] = useState("");
+  const [timeLeft, setTimeLeft] = useState(30);
 
   const navigate = useNavigate();
 
@@ -55,6 +56,27 @@ function Practice() {
 
   }, [chapterId, level, navigate]);
 
+  useEffect(() => {
+
+    if (!questions.length) return;
+
+    if (timeLeft === 0) {
+
+      handleAnswer(null);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+
+  }, [timeLeft, questions]);
+
+
+  
+
   const handleAnswer = (ans) => {
 
     let newScore = score;
@@ -74,6 +96,7 @@ function Practice() {
     }
 
     setTimeout(() => setXp(""), 1000);
+    setTimeLeft(30);
 
     // ✅ Next Question
     if (index + 1 < questions.length) {
@@ -191,6 +214,12 @@ function Practice() {
           }}
         ></div>
       </div>
+
+      <h3 style={{
+        color: timeLeft <= 10 ? "red" : "black"
+      }}>
+        ⏳ Time Left: {timeLeft}s
+      </h3>
 
       <p>
         Question {index + 1} / {questions.length}

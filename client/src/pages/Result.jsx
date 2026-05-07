@@ -1,60 +1,90 @@
 import { useLocation, useNavigate } from "react-router-dom";
 
 function Result() {
-  const { state } = useLocation();
+
+  const location = useLocation();
+
   const navigate = useNavigate();
 
-  const score = state?.score || 0;
-  const total = state?.total || 0;
-  const correct = state?.correct || 0;
+  const {
+    score,
+    total,
+    correct
+  } = location.state;
 
-  const accuracy = total ? ((correct / total) * 100).toFixed(0) : 0;
+  const percentage =
+    ((correct / total) * 100).toFixed(0);
 
-  // 📊 Smart feedback
   let message = "";
-  let color = "";
 
-  if (accuracy == 100) {
-    message = "🔥 Perfect! You have mastered this level.";
-    color = "green";
-  } else if (accuracy >= 70) {
-    message = "💪 Good job! A little more practice will make it perfect.";
-    color = "blue";
-  } else if (accuracy >= 40) {
-    message = "⚠️ You need more practice. Focus on basics.";
-    color = "orange";
+  if (percentage >= 80) {
+    message = "🔥 Excellent Work!";
+  } else if (percentage >= 50) {
+    message = "👍 Good Job!";
   } else {
-    message = "❌ Weak performance. Revise concepts before retrying.";
-    color = "red";
+    message = "📚 Keep Practicing!";
   }
 
   return (
-    <div style={{ padding: "20px", textAlign: "center" }}>
-      <h1>🎯 Result Analysis</h1>
+    <div style={{
+      textAlign: "center",
+      marginTop: "80px",
+      fontFamily: "Arial"
+    }}>
 
-      <h2>Score: {score}</h2>
-      <p>Total Questions: {total}</p>
-      <p>Correct Answers: {correct}</p>
-      <p>Accuracy: {accuracy}%</p>
+      <h1>🎉 Quiz Finished</h1>
 
-      {/* 📊 Feedback Box */}
+      <h2>{message}</h2>
+
+      <h3>Score: {score}</h3>
+
+      <h3>
+        Correct Answers:
+        {" "}
+        {correct}/{total}
+      </h3>
+
+      <h3>
+        Accuracy:
+        {" "}
+        {percentage}%
+      </h3>
+
+      {/* ✅ Performance Bar */}
       <div style={{
-        marginTop: "20px",
-        padding: "15px",
-        borderRadius: "10px",
-        background: "#f5f5f5",
-        color: color,
-        fontWeight: "bold"
+        width: "300px",
+        height: "20px",
+        background: "#ddd",
+        margin: "20px auto",
+        borderRadius: "10px"
       }}>
-        {message}
+
+        <div style={{
+          width: `${percentage}%`,
+          height: "100%",
+          background:
+            percentage >= 80
+              ? "green"
+              : percentage >= 50
+              ? "orange"
+              : "red",
+          borderRadius: "10px"
+        }}></div>
+
       </div>
 
-      <button 
+      <button
         onClick={() => navigate("/")}
-        style={{ marginTop: "20px", padding: "10px" }}
+        style={{
+          padding: "10px 20px",
+          border: "none",
+          borderRadius: "10px",
+          cursor: "pointer"
+        }}
       >
-        Go Home
+        Back to Home
       </button>
+
     </div>
   );
 }
