@@ -165,20 +165,60 @@ app.post("/save-progress", auth, async (req, res) => {
 // 📝 LEGACY (OPTIONAL)
 // =====================
 
-// ⚠️ You can REMOVE this later
+
 app.post("/submit", auth, async (req, res) => {
   const { score, chapterId, level } = req.body;
 
   try {
+
+    // ✅ Get user from token
+    const userEmail = req.user.email;
+
     await pool.query(
-      "INSERT INTO results(score, chapter_id, level) VALUES($1,$2,$3)",
-      [score, chapterId, level]
+      `
+      INSERT INTO results
+      (user_email, chapter_id, level, score)
+      VALUES ($1, $2, $3, $4)
+      `,
+      [userEmail, chapterId, level, score]
     );
 
-    res.json({ message: "Result saved" });
+    res.json({
+      message: "Result saved successfully"
+    });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to save result" });
+
+    res.status(500).json({
+      error: "Failed to save result"
+    });
+  }
+});
+
+
+app.get("/my-results", auth, async (req, res) => {
+  try {
+
+    const userEmail = req.user.email;
+
+    const result = await pool.query(
+      `
+      SELECT * FROM results
+      WHERE user_email = $1
+      ORDER BY created_at DESC
+      `,
+      [userEmail]
+    );
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      error: "Failed to fetch results"
+    });
   }
 });
 
