@@ -16,8 +16,14 @@ function Practice() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios
-      .get(`${API_URL}/questions/${chapterId}/${level}`)
+    axios.get(
+      `${API_URL}/questions/${chapterId}/${level}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      }
+    )
       .then(res => setQuestions(res.data));
   }, [chapterId, level]);
 
@@ -40,11 +46,19 @@ function Practice() {
       setTimeout(() => {
 
         // ✅ Backend save
-        axios.post(`${API_URL}/submit`, {
-          score: newScore,
-          chapterId,
-          level
-        });
+        axios.post(
+          `${API_URL}/submit`,
+          {
+            score: newScore,
+            chapterId,
+            level
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`
+            }
+          }
+        );
 
         const progress = JSON.parse(localStorage.getItem("progress")) || {};
 

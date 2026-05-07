@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const auth = require("./middleware/auth");
 const pool = require("./db");
 
 const app = express();
@@ -110,7 +111,7 @@ app.post("/login", async (req, res) => {
 // =====================
 
 // ✅ Get chapters
-app.get("/chapters", async (req, res) => {
+app.get("/chapters", auth, async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM chapters ORDER BY id");
     res.json(result.rows);
@@ -121,7 +122,7 @@ app.get("/chapters", async (req, res) => {
 });
 
 // ✅ Get questions
-app.get("/questions/:chapterId/:level", async (req, res) => {
+app.get("/questions/:chapterId/:level", auth, async (req, res) => {
   const { chapterId, level } = req.params;
 
   try {
@@ -165,7 +166,7 @@ app.post("/save-progress", auth, async (req, res) => {
 // =====================
 
 // ⚠️ You can REMOVE this later
-app.post("/submit", async (req, res) => {
+app.post("/submit", auth, async (req, res) => {
   const { score, chapterId, level } = req.body;
 
   try {

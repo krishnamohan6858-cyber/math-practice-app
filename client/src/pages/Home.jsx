@@ -20,7 +20,11 @@ function Home() {
   const isPremiumUser = localStorage.getItem("isPremiumUser") === "true";
 
   useEffect(() => {
-    axios.get(`${API_URL}/chapters`)
+    axios.get(`${API_URL}/chapters`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      }
+    })
       .then(res => setChapters(res.data))
       .catch(err => console.error(err));
 
