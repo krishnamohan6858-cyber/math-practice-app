@@ -34,6 +34,7 @@ function Login() {
 
       // ✅ Save token
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("userEmail", email);
 
       alert("Login Successful 🚀");
       navigate("/");

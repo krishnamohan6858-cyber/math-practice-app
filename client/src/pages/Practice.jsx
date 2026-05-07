@@ -19,6 +19,10 @@ function Practice() {
   // ✅ Current logged-in user
   const userEmail = localStorage.getItem("userEmail");
 
+  // ✅ User-wise keys
+  const progressKey = `progress_${userEmail}`;
+  const analyticsKey = `analytics_${userEmail}`;
+
   useEffect(() => {
 
     axios.get(
@@ -32,10 +36,24 @@ function Practice() {
     .then(res => setQuestions(res.data))
     .catch(err => {
       console.error(err);
-      alert("Failed to load questions");
+
+      // ✅ Invalid token handling
+      if (err.response?.status === 401) {
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("userEmail");
+
+        alert("Session expired. Please login again.");
+
+        navigate("/login");
+
+      } else {
+
+        alert("Failed to load questions");
+      }
     });
 
-  }, [chapterId, level]);
+  }, [chapterId, level, navigate]);
 
   const handleAnswer = (ans) => {
 
@@ -94,11 +112,8 @@ function Practice() {
         // ✅ USER-WISE PROGRESS
         // =========================
 
-        const progressKey = `progress_${userEmail}`;
-
         const progress =
-          JSON.parse(localStorage.getItem(progressKey))
-          || {};
+          JSON.parse(localStorage.getItem(progressKey)) || {};
 
         progress[`${chapterId}-${level}`] = {
           score: newScore,
@@ -113,8 +128,6 @@ function Practice() {
         // =========================
         // ✅ USER-WISE ANALYTICS
         // =========================
-
-        const analyticsKey = `analytics_${userEmail}`;
 
         const analytics =
           JSON.parse(localStorage.getItem(analyticsKey))
@@ -150,7 +163,7 @@ function Practice() {
   };
 
   if (!questions.length) {
-    return <h2>Loading...</h2>;
+    return <h2 style={{ textAlign: "center" }}>Loading...</h2>;
   }
 
   const progressPercent =

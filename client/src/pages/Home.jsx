@@ -16,16 +16,8 @@ function Home() {
 
   const token = localStorage.getItem("token");
 
-  // ✅ Get current logged in user
-  let currentUser = null;
-
-  try {
-    currentUser = JSON.parse(localStorage.getItem("user"));
-  } catch (err) {
-    currentUser = null;
-  }
-
-  const userId = currentUser?.id;
+  // ✅ Current logged-in user
+  const userEmail = localStorage.getItem("userEmail");
 
   // ✅ Redirect if not logged in
   useEffect(() => {
@@ -56,44 +48,44 @@ function Home() {
       setChapters(res.data);
 
       // =========================
-      // ✅ USER-SPECIFIC PROGRESS
+      // ✅ USER-WISE PROGRESS
       // =========================
 
-      const allProgress =
-        JSON.parse(localStorage.getItem("progress")) || {};
+      const progressKey = `progress_${userEmail}`;
 
-      const userProgress =
-        allProgress[userId] || {};
+      const progress =
+        JSON.parse(localStorage.getItem(progressKey))
+        || {};
 
       let xp = 0;
 
-      Object.values(userProgress).forEach(p => {
+      Object.values(progress).forEach(p => {
         xp += p.score || 0;
       });
 
       setTotalXP(xp);
 
       // =========================
-      // ✅ USER-SPECIFIC ANALYTICS
+      // ✅ USER-WISE ANALYTICS
       // =========================
 
-      const allAnalytics =
-        JSON.parse(localStorage.getItem("analytics")) || {};
+      const analyticsKey = `analytics_${userEmail}`;
 
-      const userAnalytics =
-        allAnalytics[userId] || {};
+      const savedAnalytics =
+        JSON.parse(localStorage.getItem(analyticsKey))
+        || {};
 
-      setAnalytics(userAnalytics);
+      setAnalytics(savedAnalytics);
 
     } catch (err) {
 
       console.error(err);
 
-      // ✅ Invalid token
+      // ✅ Invalid token handling
       if (err.response?.status === 401) {
 
         localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        localStorage.removeItem("userEmail");
 
         alert("Session expired. Please login again.");
 
@@ -110,7 +102,7 @@ function Home() {
   const handleLogout = () => {
 
     localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem("userEmail");
 
     navigate("/login");
   };
@@ -200,9 +192,9 @@ function Home() {
               style={{ marginBottom: "10px" }}
             >
 
-              <strong>{ch.name}</strong> :
+              <strong>{ch.name}</strong>
 
-              {" "}
+              {" : "}
 
               {avg ? `${avg}%` : "No data"}
 
